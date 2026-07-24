@@ -1,0 +1,5 @@
+{
+  "token": "YOUR_DISCORD_BOT_TOKEN_HERE",
+  "clientId": "YOUR_DISCORD_CLIENT_ID_HERE",
+  "geminiApiKey": "YOUR_GEMINI_API_KEY_HERE"
+}
