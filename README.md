@@ -1,52 +1,54 @@
 # Pokétwo Helper Bot
 
-Ein Discord Bot, der dir hilft, wild spawnende Pokémon vom "Pokétwo" Bot zu identifizieren. Der Bot nutzt die offizielle Google Gemini AI, um Bilder aus Discord zu analysieren und den englischen Namen des Pokémon auszugeben. Außerdem sendet der Bot eine TTS (Text-to-Speech) Benachrichtigung in einen bestimmten Sprachkanal, wenn ein neues Pokémon erscheint.
+[English](README.md) | [Deutsch](README.de.md) | [Español](README.es.md) | [日本語](README.ja.md) | [Français](README.fr.md)
+
+A Discord bot that helps you identify wild Pokémon spawns from the "Pokétwo" bot. The bot uses the official Google Gemini AI to analyze images from Discord and outputs the English name of the Pokémon. Additionally, the bot sends a TTS (Text-to-Speech) notification to a specific voice channel when a new Pokémon appears.
 
 ## Features
 
-- `/helpme`: Findet den letzten Pokétwo-Spawn im aktuellen Kanal und nutzt Gemini AI (Bilderkennung), um das gesuchte Pokémon zu benennen.
-- `/testtts`: Sendet eine Test-Benachrichtigung an den konfigurierten Voice-Channel.
-- **Automatische Erkennung**: Sobald Pokétwo ein neues wildes Pokémon postet, geht der Bot in einen bestimmten Sprachkanal, liest eine Benachrichtigung laut vor und geht wieder.
+- `/helpme`: Finds the last Pokétwo spawn in the current channel and uses Gemini AI (image recognition) to name the requested Pokémon.
+- `/testtts`: Sends a test notification to the configured voice channel.
+- **Automatic Detection**: As soon as Pokétwo posts a new wild Pokémon, the bot joins a specific voice channel, reads a notification aloud, and leaves.
 
-## Voraussetzungen
+## Requirements
 
-- [Node.js](https://nodejs.org/en/) (Version 16.14.0 oder neuer)
-- Ein eigener Discord Bot Token & Client ID ([Discord Developer Portal](https://discord.com/developers/applications))
-- Ein Google Gemini API Key ([Google AI Studio](https://aistudio.google.com/))
+- [Node.js](https://nodejs.org/en/) (Version 16.14.0 or newer)
+- Your own Discord Bot Token & Client ID ([Discord Developer Portal](https://discord.com/developers/applications))
+- A Google Gemini API Key ([Google AI Studio](https://aistudio.google.com/))
 
 ## Installation
 
-1. **Repository klonen**  
-   Klone dieses Repository auf deinen Rechner (oder lade die ZIP-Datei herunter).
+1. **Clone Repository**  
+   Clone this repository to your computer (or download the ZIP file).
 
-2. **Abhängigkeiten installieren**  
-   Öffne ein Terminal in dem Verzeichnis des Bots und führe folgenden Befehl aus:
+2. **Install Dependencies**  
+   Open a terminal in the bot's directory and run the following command:
    ```bash
    npm install
    ```
 
-3. **Konfiguration erstellen**  
-   Kopiere die Datei `config.example.json` und benenne sie in `config.json` um.
-   Trage dann deine Tokens und Einstellungen in die `config.json` ein:
+3. **Create Configuration**  
+   Copy the `config.example.json` file and rename it to `config.json`.
+   Then enter your tokens and settings into the `config.json`:
    ```json
    {
-     "token": "DEIN_DISCORD_BOT_TOKEN",
-     "clientId": "DEINE_DISCORD_CLIENT_ID",
-     "geminiApiKey": "DEIN_GEMINI_API_KEY",
-     "voiceChannelId": "ID_DEINES_VOICE_CHANNELS",
-     "ttsMessage": "Text, den der Bot vorlesen soll"
+     "token": "YOUR_DISCORD_BOT_TOKEN",
+     "clientId": "YOUR_DISCORD_CLIENT_ID",
+     "geminiApiKey": "YOUR_GEMINI_API_KEY",
+     "voiceChannelId": "YOUR_VOICE_CHANNEL_ID",
+     "ttsMessage": "Text the bot should read aloud"
    }
    ```
 
-## Starten
+## Starting
 
-Führe im Terminal diesen Befehl aus:
+Run this command in the terminal:
 ```bash
 node index.js
 ```
-Sobald "Erfolgreich eingeloggt!" in der Konsole steht, ist der Bot bereit.
+Once "Erfolgreich eingeloggt!" appears in the console, the bot is ready.
 
-## Wichtige Hinweise
-- Damit die Slash-Befehle funktionieren, musst du deinen Bot mit dem OAuth2 Scope `applications.commands` und `bot` auf deinen Server einladen.
-- Gib dem Bot die Berechtigungen "Nachrichten lesen", "Nachrichten senden", sowie "Verbinden" und "Sprechen" für die Sprachkanäle.
-- TTS Nachrichten müssen in den Servereinstellungen für die Rolle des Bots erlaubt sein.
+## Important Notes
+- For slash commands to work, you must invite your bot to your server with the OAuth2 scopes `applications.commands` and `bot`.
+- Give the bot the permissions "Read Messages", "Send Messages", as well as "Connect" and "Speak" for voice channels.
+- TTS messages must be allowed in the server settings for the bot's role.
