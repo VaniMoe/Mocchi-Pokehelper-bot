@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, REST, Routes } = require('discord.js');
+const { Client, GatewayIntentBits, REST, Routes, MessageFlags, EmbedBuilder } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
 const googleTTS = require('google-tts-api');
@@ -13,6 +13,18 @@ try {
 } catch (error) {
     console.error("Die config.json Datei konnte nicht geladen werden.");
     process.exit(1);
+}
+
+let stats = { topPokemon: {}, topUsers: {} };
+const fs = require('fs');
+try {
+    stats = require('./stats.json');
+} catch (error) {
+    fs.writeFileSync(path.join(__dirname, 'stats.json'), JSON.stringify(stats, null, 2));
+}
+
+function saveStats() {
+    fs.writeFileSync(path.join(__dirname, 'stats.json'), JSON.stringify(stats, null, 2));
 }
 
 const client = new Client({ 
@@ -45,16 +57,21 @@ app.get('/api/history', (req, res) => {
 app.get('/api/settings', (req, res) => {
     res.json({
         voiceChannelId: config.voiceChannelId || '',
-        ttsMessage: config.ttsMessage || ''
+        ttsMessage: config.ttsMessage || '',
+        ttsLanguage: config.ttsLanguage || 'de'
     });
 });
 
 app.post('/api/settings', (req, res) => {
-    const fs = require('fs');
     config.voiceChannelId = req.body.voiceChannelId;
     config.ttsMessage = req.body.ttsMessage;
+    config.ttsLanguage = req.body.ttsLanguage || 'de';
     fs.writeFileSync(path.join(__dirname, 'config.json'), JSON.stringify(config, null, 2));
     res.json({ success: true });
+});
+
+app.get('/api/stats', (req, res) => {
+    res.json(stats);
 });
 
 // Intercept console.log
@@ -75,8 +92,9 @@ httpServer.listen(port, () => {
 
 async function playTTSInVoiceChannel(channelId, text, guild) {
     try {
+        const lang = config.ttsLanguage || 'de';
         const url = googleTTS.getAudioUrl(text, {
-            lang: 'de',
+            lang: lang,
             slow: false,
             host: 'https://translate.google.com',
         });
@@ -157,6 +175,10 @@ client.once('ready', async () => {
             name: 'testtts',
             description: 'Testet die TTS Benachrichtigung.',
         },
+        {
+            name: 'sound',
+            description: 'Spielt einen Soundeffekt im Sprachkanal ab.',
+        },
     ];
 
     const rest = new REST({ version: '10' }).setToken(config.token);
@@ -176,16 +198,11 @@ client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
     if (interaction.commandName === 'testtts') {
-        if (!config.voiceChannelId || config.voiceChannelId === 'YOUR_VOICE_CHANNEL_ID_HERE') {
-            await interaction.reply({ content: 'Bitte setze eine voiceChannelId in der config.json', ephemeral: true });
-            return;
-        }
-        await playTTSInVoiceChannel(config.voiceChannelId, config.ttsMessage || 'Neues Pokemon gespawnt!', interaction.guild);
-        await interaction.reply({ content: 'Lese Nachricht im Sprachkanal vor...', ephemeral: true });
+        const voiceChannelId = config.voiceChannelId || '1515070770425106565';
+        await playTTSInVoiceChannel(voiceChannelId, 'Neues Pokemon gespawnt ihr flachwixxer', interaction.guild);
+        await interaction.reply({ content: 'Lese Nachricht im Sprachkanal vor...', flags: MessageFlags.Ephemeral });
         return;
     }
-
-
 
     if (interaction.commandName === 'helpme') {
         await interaction.deferReply();
@@ -229,12 +246,50 @@ client.on('interactionCreate', async interaction => {
 
             const pokemonName = await identifyPokemonWithGemini(imageUrl);
 
-            await interaction.editReply(`Das ist: **${pokemonName}**\n*(Bild: ${imageUrl})*`);
+            // Update Stats
+            const pName = pokemonName.toLowerCase();
+            stats.topPokemon[pName] = (stats.topPokemon[pName] || 0) + 1;
+            const uName = interaction.user.username;
+            stats.topUsers[uName] = (stats.topUsers[uName] || 0) + 1;
+            saveStats();
+
+            // Fetch PokéAPI
+            let pokeData = null;
+            try {
+                const axios = require('axios');
+                const response = await axios.get(`https://pokeapi.co/api/v2/pokemon/${pName}`);
+                pokeData = response.data;
+            } catch (err) {
+                console.error("PokeAPI Fehler:", err.message);
+            }
+
+            const embed = new EmbedBuilder()
+                .setTitle(`Das ist: **${pokemonName}**!`)
+                .setImage(imageUrl)
+                .setColor('#5865F2')
+                .setDescription(`Kopiere diesen Befehl, um es sofort zu fangen:\n\`\`\`\n@Pokétwo catch ${pokemonName}\n\`\`\``);
+
+            if (pokeData) {
+                const types = pokeData.types.map(t => t.type.name).join(', ');
+                embed.addFields(
+                    { name: 'Typ', value: types, inline: true },
+                    { name: 'Basis-Erfahrung', value: pokeData.base_experience?.toString() || 'Unbekannt', inline: true },
+                    { name: 'Gewicht', value: (pokeData.weight / 10).toString() + ' kg', inline: true }
+                );
+            }
+
+            await interaction.editReply({ content: '', embeds: [embed] });
 
         } catch (error) {
             console.error("Fehler im /helpme Befehl:", error);
             await interaction.editReply('Es gab einen Fehler bei der Ausführung des Befehls.');
         }
+    }
+
+    if (interaction.commandName === 'sound') {
+        const voiceChannelId = config.voiceChannelId || '1515070770425106565';
+        await playTTSInVoiceChannel(voiceChannelId, 'Hier könnte ein MP3 Sound abgespielt werden', interaction.guild);
+        await interaction.reply({ content: 'Sound abgespielt!', flags: MessageFlags.Ephemeral });
     }
 });
 
@@ -245,12 +300,22 @@ client.on('messageCreate', async message => {
     if (message.author.id === poketwoId) {
         if (message.embeds.length > 0 && 
             message.embeds[0].image && 
-            message.embeds[0].image.url &&
-            (message.embeds[0].title === 'A wild pokémon has appeared!' || message.embeds[0].title === 'A new wild pokémon has appeared!' || message.embeds[0].description?.includes('Guess the pokémon'))) {
+            message.embeds[0].image.url) {
             
-            // TTS Nachricht im Sprachkanal vorlesen
-            if (config.voiceChannelId && config.voiceChannelId !== 'YOUR_VOICE_CHANNEL_ID_HERE') {
-                playTTSInVoiceChannel(config.voiceChannelId, config.ttsMessage || "Neues Pokemon gespawnt!", message.guild);
+            const title = message.embeds[0].title || '';
+            const desc = message.embeds[0].description || '';
+            
+            const isSpawn = title.includes('A wild pokémon has appeared') || title.includes('A new wild pokémon has appeared') || desc.includes('Guess the pokémon');
+            const isLegendary = title.toLowerCase().includes('legendary') || desc.toLowerCase().includes('legendary');
+
+            if (isLegendary) {
+                await message.channel.send('@everyone 🚨 EIN LEGENDÄRES POKÉMON IST GESPAWNT! 🚨');
+                const voiceChannelId = config.voiceChannelId || '1515070770425106565';
+                playTTSInVoiceChannel(voiceChannelId, "Achtung! Ein legendäres Pokemon ist gespawnt!", message.guild);
+            } else if (isSpawn) {
+                const voiceChannelId = config.voiceChannelId || '1515070770425106565';
+                const msg = config.ttsMessage || "Neues Pokemon gespawnt";
+                playTTSInVoiceChannel(voiceChannelId, msg, message.guild);
             }
         }
     }

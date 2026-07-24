@@ -56,5 +56,6 @@ Sobald "Erfolgreich eingeloggt!" in der Konsole steht, ist der Bot bereit.
 
 ## Update Verlauf
 
+- **v1.2.0**: Mega-Update! PokéAPI-Integration für Pokémon-Stats, Legendary-Erkennung mit Alarmen, Copy-Paste Catch-Befehle, TTS-Sprachauswahl und Statistiken im Dashboard hinzugefügt!
 - **v1.1.0**: Web-Dashboard hinzugefügt (Live-Logs, Pokémon Historie und dynamische Einstellungen).
 - **v1.0.0**: Erste Veröffentlichung mit Gemini AI Pokémon-Erkennung und TTS Benachrichtigungen.

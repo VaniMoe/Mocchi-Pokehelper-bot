@@ -56,5 +56,6 @@ Once "Erfolgreich eingeloggt!" appears in the console, the bot is ready.
 
 ## Changelog
 
+- **v1.2.0**: Mega-Update! Added PokéAPI integration for detailed Pokémon stats, legendary spawn detection with alarms, copy-paste quick catch commands, TTS language selection, and statistics tracking on the dashboard!
 - **v1.1.0**: Added Web Dashboard with live logs, Pokémon history, and dynamic settings.
 - **v1.0.0**: Initial release with Gemini AI Pokémon recognition and TTS notifications.

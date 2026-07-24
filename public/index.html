@@ -29,7 +29,7 @@
         .container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            grid-template-rows: auto auto;
+            grid-template-rows: auto auto auto;
             gap: 20px;
             max-width: 1200px;
             margin: 0 auto;
@@ -63,7 +63,7 @@
             font-weight: bold;
         }
 
-        .form-group input {
+        .form-group input, .form-group select {
             width: 100%;
             padding: 8px;
             box-sizing: border-box;
@@ -85,6 +85,26 @@
 
         button:hover {
             background-color: #4752c4;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .stats-col ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .stats-col li {
+            background: #1e1f22;
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
         }
 
         .log-container {
@@ -162,8 +182,33 @@
                 <label for="ttsMessage">TTS Nachricht</label>
                 <input type="text" id="ttsMessage" placeholder="z.B. Neues Pokemon gespawnt ihr flachwixxer">
             </div>
+            <div class="form-group">
+                <label for="ttsLanguage">TTS Sprache</label>
+                <select id="ttsLanguage">
+                    <option value="de">Deutsch</option>
+                    <option value="en">Englisch</option>
+                    <option value="ja">Japanisch</option>
+                    <option value="es">Spanisch</option>
+                    <option value="fr">Französisch</option>
+                </select>
+            </div>
             <button onclick="saveSettings()">Speichern</button>
             <span id="saveStatus" style="margin-left: 10px; color: #43b581; display: none;">Gespeichert!</span>
+        </div>
+
+        <!-- Stats Panel -->
+        <div class="panel full-width">
+            <h2>Statistiken</h2>
+            <div class="stats-grid">
+                <div class="stats-col">
+                    <h3>Top Pokémon</h3>
+                    <ul id="topPokemonList"></ul>
+                </div>
+                <div class="stats-col">
+                    <h3>Wall of Shame (Top User)</h3>
+                    <ul id="topUsersList"></ul>
+                </div>
+            </div>
         </div>
 
         <!-- Live Logs Panel -->
@@ -196,12 +241,14 @@
             .then(data => {
                 document.getElementById('voiceChannelId').value = data.voiceChannelId;
                 document.getElementById('ttsMessage').value = data.ttsMessage;
+                document.getElementById('ttsLanguage').value = data.ttsLanguage;
             });
 
         function saveSettings() {
             const data = {
                 voiceChannelId: document.getElementById('voiceChannelId').value,
-                ttsMessage: document.getElementById('ttsMessage').value
+                ttsMessage: document.getElementById('ttsMessage').value,
+                ttsLanguage: document.getElementById('ttsLanguage').value
             };
             fetch('/api/settings', {
                 method: 'POST',
@@ -211,6 +258,25 @@
                 const status = document.getElementById('saveStatus');
                 status.style.display = 'inline';
                 setTimeout(() => status.style.display = 'none', 3000);
+            });
+        }
+
+        // Lade Stats
+        fetch('/api/stats')
+            .then(res => res.json())
+            .then(data => {
+                renderStats('topPokemonList', data.topPokemon);
+                renderStats('topUsersList', data.topUsers);
+            });
+
+        function renderStats(elementId, dataObj) {
+            const list = document.getElementById(elementId);
+            list.innerHTML = '';
+            const sorted = Object.entries(dataObj).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            sorted.forEach(([key, val]) => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${key}</span> <strong>${val}</strong>`;
+                list.appendChild(li);
             });
         }
 
