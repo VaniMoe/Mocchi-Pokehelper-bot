@@ -53,3 +53,8 @@ Once "Erfolgreich eingeloggt!" appears in the console, the bot is ready.
 - For slash commands to work, you must invite your bot to your server with the OAuth2 scopes `applications.commands` and `bot`.
 - Give the bot the permissions "Read Messages", "Send Messages", as well as "Connect" and "Speak" for voice channels.
 - TTS messages must be allowed in the server settings for the bot's role.
+
+## Changelog
+
+- **v1.1.0**: Added Web Dashboard with live logs, Pokémon history, and dynamic settings.
+- **v1.0.0**: Initial release with Gemini AI Pokémon recognition and TTS notifications.

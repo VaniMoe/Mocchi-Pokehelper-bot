@@ -53,3 +53,8 @@ Sobald "Erfolgreich eingeloggt!" in der Konsole steht, ist der Bot bereit.
 - Damit die Slash-Befehle funktionieren, musst du deinen Bot mit dem OAuth2 Scope `applications.commands` und `bot` auf deinen Server einladen.
 - Gib dem Bot die Berechtigungen "Nachrichten lesen", "Nachrichten senden", sowie "Verbinden" und "Sprechen" für die Sprachkanäle.
 - TTS Nachrichten müssen in den Servereinstellungen für die Rolle des Bots erlaubt sein.
+
+## Update Verlauf
+
+- **v1.1.0**: Web-Dashboard hinzugefügt (Live-Logs, Pokémon Historie und dynamische Einstellungen).
+- **v1.0.0**: Erste Veröffentlichung mit Gemini AI Pokémon-Erkennung und TTS Benachrichtigungen.

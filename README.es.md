@@ -52,3 +52,8 @@ Una vez que aparezca "Erfolgreich eingeloggt!" en la consola, el bot estará lis
 - Para que los comandos slash funcionen, debes invitar al bot a tu servidor con los ámbitos OAuth2 `applications.commands` y `bot`.
 - Otorga al bot los permisos "Leer mensajes", "Enviar mensajes", así como "Conectar" y "Hablar" para los canales de voz.
 - Los mensajes TTS deben estar permitidos en la configuración del servidor para el rol del bot.
+
+## Historial de actualizaciones
+
+- **v1.1.0**: Panel web agregado con registros en vivo, historial de Pokémon y configuración dinámica.
+- **v1.0.0**: Lanzamiento inicial con reconocimiento de Pokémon mediante IA Gemini y notificaciones TTS.
