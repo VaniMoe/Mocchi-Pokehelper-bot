@@ -27,18 +27,16 @@ Ein Discord Bot, der dir hilft, wild spawnende Pokémon vom "Pokétwo" Bot zu id
 
 3. **Konfiguration erstellen**  
    Kopiere die Datei `config.example.json` und benenne sie in `config.json` um.
-   Trage dann deine Tokens in die `config.json` ein:
+   Trage dann deine Tokens und Einstellungen in die `config.json` ein:
    ```json
    {
      "token": "DEIN_DISCORD_BOT_TOKEN",
      "clientId": "DEINE_DISCORD_CLIENT_ID",
-     "geminiApiKey": "DEIN_GEMINI_API_KEY"
+     "geminiApiKey": "DEIN_GEMINI_API_KEY",
+     "voiceChannelId": "ID_DEINES_VOICE_CHANNELS",
+     "ttsMessage": "Text, den der Bot vorlesen soll"
    }
    ```
-
-4. **Voice Channel anpassen**  
-   Öffne die Datei `index.js` mit einem Texteditor.
-   Suche nach der Variable `voiceChannelId = '1515070770425106565';` und ersetze die ID durch die ID deines eigenen Sprachkanals, in den der Bot für Benachrichtigungen gehen soll.
 
 ## Starten
 

@@ -1,5 +1,7 @@
 {
   "token": "YOUR_DISCORD_BOT_TOKEN_HERE",
   "clientId": "YOUR_DISCORD_CLIENT_ID_HERE",
-  "geminiApiKey": "YOUR_GEMINI_API_KEY_HERE"
+  "geminiApiKey": "YOUR_GEMINI_API_KEY_HERE",
+  "voiceChannelId": "YOUR_VOICE_CHANNEL_ID_HERE",
+  "ttsMessage": "Neues Pokemon gespawnt!"
 }

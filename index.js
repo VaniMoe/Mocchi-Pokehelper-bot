@@ -119,8 +119,11 @@ client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
     if (interaction.commandName === 'testtts') {
-        const voiceChannelId = '1515070770425106565';
-        await playTTSInVoiceChannel(voiceChannelId, 'Neues Pokemon gespawnt ihr flachwixxer', interaction.guild);
+        if (!config.voiceChannelId || config.voiceChannelId === 'YOUR_VOICE_CHANNEL_ID_HERE') {
+            await interaction.reply({ content: 'Bitte setze eine voiceChannelId in der config.json', ephemeral: true });
+            return;
+        }
+        await playTTSInVoiceChannel(config.voiceChannelId, config.ttsMessage || 'Neues Pokemon gespawnt!', interaction.guild);
         await interaction.reply({ content: 'Lese Nachricht im Sprachkanal vor...', ephemeral: true });
         return;
     }
@@ -189,8 +192,9 @@ client.on('messageCreate', async message => {
             (message.embeds[0].title === 'A wild pokémon has appeared!' || message.embeds[0].title === 'A new wild pokémon has appeared!' || message.embeds[0].description?.includes('Guess the pokémon'))) {
             
             // TTS Nachricht im Sprachkanal vorlesen
-            const voiceChannelId = '1515070770425106565';
-            playTTSInVoiceChannel(voiceChannelId, "Neues Pokemon gespawnt ihr flachwixxer", message.guild);
+            if (config.voiceChannelId && config.voiceChannelId !== 'YOUR_VOICE_CHANNEL_ID_HERE') {
+                playTTSInVoiceChannel(config.voiceChannelId, config.ttsMessage || "Neues Pokemon gespawnt!", message.guild);
+            }
         }
     }
 });
