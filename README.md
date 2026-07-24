@@ -56,6 +56,7 @@ Once "Erfolgreich eingeloggt!" appears in the console, the bot is ready.
 
 ## Changelog
 
+- **v1.3.0**: Added `/pokedex` command with AI-powered translation for multi-language search. Upgraded embeds with official artwork thumbnails, type emojis, German names, flavor text, and detailed abilities (including hidden ones).
 - **v1.2.0**: Mega-Update! Added PokéAPI integration for detailed Pokémon stats, legendary spawn detection with alarms, copy-paste quick catch commands, TTS language selection, and statistics tracking on the dashboard!
 - **v1.1.0**: Added Web Dashboard with live logs, Pokémon history, and dynamic settings.
 - **v1.0.0**: Initial release with Gemini AI Pokémon recognition and TTS notifications.

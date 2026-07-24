@@ -179,6 +179,18 @@ client.once('ready', async () => {
             name: 'sound',
             description: 'Spielt einen Soundeffekt im Sprachkanal ab.',
         },
+        {
+            name: 'pokedex',
+            description: 'Zeigt Informationen zu einem bestimmten Pokémon (Deutsch oder Englisch).',
+            options: [
+                {
+                    name: 'pokemon',
+                    type: 3, // STRING
+                    description: 'Der Name des Pokémon.',
+                    required: true
+                }
+            ]
+        },
     ];
 
     const rest = new REST({ version: '10' }).setToken(config.token);
@@ -255,26 +267,56 @@ client.on('interactionCreate', async interaction => {
 
             // Fetch PokéAPI
             let pokeData = null;
+            let speciesData = null;
             try {
                 const axios = require('axios');
-                const response = await axios.get(`https://pokeapi.co/api/v2/pokemon/${pName}`);
+                const [response, speciesResponse] = await Promise.all([
+                    axios.get(`https://pokeapi.co/api/v2/pokemon/${pName}`),
+                    axios.get(`https://pokeapi.co/api/v2/pokemon-species/${pName}`).catch(() => ({ data: null }))
+                ]);
                 pokeData = response.data;
+                speciesData = speciesResponse.data;
             } catch (err) {
                 console.error("PokeAPI Fehler:", err.message);
             }
 
+            let title = `Das ist: **${pokemonName}**!`;
+            let description = `Kopiere diesen Befehl, um es sofort zu fangen:\n\`\`\`\n@Pokétwo catch ${pokemonName}\n\`\`\``;
+
+            if (speciesData) {
+                const deNameObj = speciesData.names.find(n => n.language.name === 'de');
+                if (deNameObj) {
+                    title = `Das ist: **${pokemonName}** (DE: ${deNameObj.name})!`;
+                }
+
+                const flavorTextObj = speciesData.flavor_text_entries.find(f => f.language.name === 'de') || speciesData.flavor_text_entries.find(f => f.language.name === 'en');
+                if (flavorTextObj) {
+                    description += `\n\n*${flavorTextObj.flavor_text.replace(/\n|\f/g, ' ')}*`;
+                }
+            }
+
             const embed = new EmbedBuilder()
-                .setTitle(`Das ist: **${pokemonName}**!`)
-                .setImage(imageUrl)
+                .setTitle(title)
                 .setColor('#5865F2')
-                .setDescription(`Kopiere diesen Befehl, um es sofort zu fangen:\n\`\`\`\n@Pokétwo catch ${pokemonName}\n\`\`\``);
+                .setDescription(description);
 
             if (pokeData) {
-                const types = pokeData.types.map(t => t.type.name).join(', ');
+                // Set high-quality official artwork as thumbnail
+                const officialArtwork = pokeData.sprites?.other?.['official-artwork']?.front_default;
+                if (officialArtwork) {
+                    embed.setThumbnail(officialArtwork);
+                }
+
+                const typeEmojis = { normal: '⚪', fire: '🔥', water: '💧', grass: '🌿', electric: '⚡', ice: '❄️', fighting: '🥊', poison: '☠️', ground: '🏜️', flying: '🦅', psychic: '🔮', bug: '🐛', rock: '🪨', ghost: '👻', dragon: '🐉', dark: '🌑', steel: '⚙️', fairy: '✨' };
+                const types = pokeData.types.map(t => `${typeEmojis[t.type.name] || ''} ${t.type.name}`).join(', ');
+                
+                const normalAbilities = pokeData.abilities.filter(a => !a.is_hidden).map(a => a.ability.name).join(', ') || 'Keine';
+                const hiddenAbilities = pokeData.abilities.filter(a => a.is_hidden).map(a => a.ability.name).join(', ') || 'Keine';
+
                 embed.addFields(
-                    { name: 'Typ', value: types, inline: true },
-                    { name: 'Basis-Erfahrung', value: pokeData.base_experience?.toString() || 'Unbekannt', inline: true },
-                    { name: 'Gewicht', value: (pokeData.weight / 10).toString() + ' kg', inline: true }
+                    { name: 'Typ', value: types, inline: false },
+                    { name: 'Fähigkeiten (Normal)', value: normalAbilities, inline: true },
+                    { name: 'Fähigkeiten (Versteckt)', value: hiddenAbilities, inline: true }
                 );
             }
 
@@ -290,6 +332,77 @@ client.on('interactionCreate', async interaction => {
         const voiceChannelId = config.voiceChannelId || '1515070770425106565';
         await playTTSInVoiceChannel(voiceChannelId, 'Hier könnte ein MP3 Sound abgespielt werden', interaction.guild);
         await interaction.reply({ content: 'Sound abgespielt!', flags: MessageFlags.Ephemeral });
+    }
+
+    if (interaction.commandName === 'pokedex') {
+        await interaction.deferReply();
+        try {
+            const inputName = interaction.options.getString('pokemon');
+            
+            // Translate using Gemini
+            const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+            const prompt = `Translate this Pokémon name to English: "${inputName}". If it's already English, just return it. Output ONLY the exact English name, no punctuation, no extra text.`;
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const englishName = response.text().trim().toLowerCase();
+
+            // Fetch PokéAPI
+            let pokeData = null;
+            let speciesData = null;
+            const axios = require('axios');
+            const [pokeRes, speciesRes] = await Promise.all([
+                axios.get(`https://pokeapi.co/api/v2/pokemon/${englishName}`).catch(() => ({ data: null })),
+                axios.get(`https://pokeapi.co/api/v2/pokemon-species/${englishName}`).catch(() => ({ data: null }))
+            ]);
+            pokeData = pokeRes.data;
+            speciesData = speciesRes.data;
+
+            if (!pokeData) {
+                return interaction.editReply(`Konnte das Pokémon **${inputName}** nicht im Pokédex finden.`);
+            }
+
+            let title = `Das ist: **${pokeData.name}**!`;
+            let description = '';
+
+            if (speciesData) {
+                const deNameObj = speciesData.names.find(n => n.language.name === 'de');
+                if (deNameObj) {
+                    title = `Das ist: **${pokeData.name}** (DE: ${deNameObj.name})!`;
+                }
+
+                const flavorTextObj = speciesData.flavor_text_entries.find(f => f.language.name === 'de') || speciesData.flavor_text_entries.find(f => f.language.name === 'en');
+                if (flavorTextObj) {
+                    description += `\n\n*${flavorTextObj.flavor_text.replace(/\n|\f/g, ' ')}*`;
+                }
+            }
+
+            const embed = new EmbedBuilder()
+                .setTitle(title)
+                .setColor('#5865F2');
+            if(description) embed.setDescription(description);
+
+            const officialArtwork = pokeData.sprites?.other?.['official-artwork']?.front_default;
+            if (officialArtwork) {
+                embed.setThumbnail(officialArtwork);
+            }
+
+            const typeEmojis = { normal: '⚪', fire: '🔥', water: '💧', grass: '🌿', electric: '⚡', ice: '❄️', fighting: '🥊', poison: '☠️', ground: '🏜️', flying: '🦅', psychic: '🔮', bug: '🐛', rock: '🪨', ghost: '👻', dragon: '🐉', dark: '🌑', steel: '⚙️', fairy: '✨' };
+            const types = pokeData.types.map(t => `${typeEmojis[t.type.name] || ''} ${t.type.name}`).join(', ');
+            
+            const normalAbilities = pokeData.abilities.filter(a => !a.is_hidden).map(a => a.ability.name).join(', ') || 'Keine';
+            const hiddenAbilities = pokeData.abilities.filter(a => a.is_hidden).map(a => a.ability.name).join(', ') || 'Keine';
+
+            embed.addFields(
+                { name: 'Typ', value: types, inline: false },
+                { name: 'Fähigkeiten (Normal)', value: normalAbilities, inline: true },
+                { name: 'Fähigkeiten (Versteckt)', value: hiddenAbilities, inline: true }
+            );
+
+            await interaction.editReply({ embeds: [embed] });
+        } catch (error) {
+            console.error("Fehler im /pokedex Befehl:", error);
+            await interaction.editReply('Fehler beim Abrufen des Pokédex.');
+        }
     }
 });
 
