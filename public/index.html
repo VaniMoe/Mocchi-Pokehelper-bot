@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokétwo Helper Bot - Dashboard</title>
+    <style>
+        :root {
+            --primary: #5865F2; /* Discord Blurple */
+            --bg-color: #2b2d31; /* Discord Dark */
+            --panel-bg: #313338;
+            --text-color: #dbdee1;
+            --header-color: #f2f3f5;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: var(--header-color);
+            text-align: center;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .panel.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            color: var(--header-color);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            background-color: #1e1f22;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #4752c4;
+        }
+
+        .log-container {
+            height: 300px;
+            overflow-y: auto;
+            background-color: #1e1f22;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 2px;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background-color: #1e1f22;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .history-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+
+        .history-item-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .history-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .history-time {
+            font-size: 0.9em;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Pokétwo Helper Bot</h1>
+
+    <div class="container">
+        
+        <!-- Settings Panel -->
+        <div class="panel full-width">
+            <h2>Einstellungen</h2>
+            <div class="form-group">
+                <label for="voiceChannelId">Voice Channel ID</label>
+                <input type="text" id="voiceChannelId" placeholder="z.B. 1515070770425106565">
+            </div>
+            <div class="form-group">
+                <label for="ttsMessage">TTS Nachricht</label>
+                <input type="text" id="ttsMessage" placeholder="z.B. Neues Pokemon gespawnt ihr flachwixxer">
+            </div>
+            <button onclick="saveSettings()">Speichern</button>
+            <span id="saveStatus" style="margin-left: 10px; color: #43b581; display: none;">Gespeichert!</span>
+        </div>
+
+        <!-- Live Logs Panel -->
+        <div class="panel">
+            <h2>Live Logs</h2>
+            <div class="log-container" id="logContainer">
+                <!-- Logs werden hier eingefügt -->
+            </div>
+        </div>
+
+        <!-- History Panel -->
+        <div class="panel">
+            <h2>Zuletzt erraten (History)</h2>
+            <div class="history-list" id="historyList">
+                <!-- History wird hier eingefügt -->
+            </div>
+        </div>
+
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const logContainer = document.getElementById('logContainer');
+        const historyList = document.getElementById('historyList');
+
+        // Lade Settings
+        fetch('/api/settings')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('voiceChannelId').value = data.voiceChannelId;
+                document.getElementById('ttsMessage').value = data.ttsMessage;
+            });
+
+        function saveSettings() {
+            const data = {
+                voiceChannelId: document.getElementById('voiceChannelId').value,
+                ttsMessage: document.getElementById('ttsMessage').value
+            };
+            fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(() => {
+                const status = document.getElementById('saveStatus');
+                status.style.display = 'inline';
+                setTimeout(() => status.style.display = 'none', 3000);
+            });
+        }
+
+        // Empfange initial history
+        fetch('/api/history')
+            .then(res => res.json())
+            .then(data => {
+                data.forEach(item => addHistoryItem(item));
+            });
+
+        socket.on('log', (msg) => {
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logContainer.appendChild(div);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        });
+
+        socket.on('newPokemon', (data) => {
+            addHistoryItem(data, true);
+        });
+
+        function addHistoryItem(item, prepend = false) {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            
+            const timeStr = new Date(item.timestamp).toLocaleString();
+            
+            div.innerHTML = `
+                <img src="${item.imageUrl}" alt="${item.name}">
+                <div class="history-item-info">
+                    <span class="history-name">${item.name}</span>
+                    <span class="history-time">${timeStr}</span>
+                </div>
+            `;
+            
+            if (prepend) {
+                historyList.prepend(div);
+            } else {
+                historyList.appendChild(div);
+            }
+        }
+    </script>
+</body>
+</html>

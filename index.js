@@ -2,6 +2,10 @@ const { Client, GatewayIntentBits, REST, Routes } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
 const googleTTS = require('google-tts-api');
+const express = require('express');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
+const path = require('path');
 
 let config;
 try {
@@ -22,6 +26,52 @@ const client = new Client({
 
 // Setup Gemini API
 const genAI = new GoogleGenerativeAI(config.geminiApiKey);
+
+// Setup Web Dashboard
+const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer);
+const port = 3000;
+
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+
+const history = [];
+
+app.get('/api/history', (req, res) => {
+    res.json(history);
+});
+
+app.get('/api/settings', (req, res) => {
+    res.json({
+        voiceChannelId: config.voiceChannelId || '',
+        ttsMessage: config.ttsMessage || ''
+    });
+});
+
+app.post('/api/settings', (req, res) => {
+    const fs = require('fs');
+    config.voiceChannelId = req.body.voiceChannelId;
+    config.ttsMessage = req.body.ttsMessage;
+    fs.writeFileSync(path.join(__dirname, 'config.json'), JSON.stringify(config, null, 2));
+    res.json({ success: true });
+});
+
+// Intercept console.log
+const originalLog = console.log;
+console.log = function(...args) {
+    originalLog.apply(console, args);
+    io.emit('log', args.join(' '));
+};
+const originalError = console.error;
+console.error = function(...args) {
+    originalError.apply(console, args);
+    io.emit('log', '[ERROR] ' + args.join(' '));
+};
+
+httpServer.listen(port, () => {
+    originalLog(`Dashboard läuft auf http://localhost:${port}`);
+});
 
 async function playTTSInVoiceChannel(channelId, text, guild) {
     try {
@@ -81,6 +131,13 @@ async function identifyPokemonWithGemini(imageUrl) {
         const result = await model.generateContent([prompt, imagePart]);
         const response = await result.response;
         const text = response.text().trim();
+        
+        // Add to history
+        const historyItem = { name: text, imageUrl: imageUrl, timestamp: Date.now() };
+        history.push(historyItem);
+        if(history.length > 50) history.shift();
+        io.emit('newPokemon', historyItem);
+
         return text;
     } catch (error) {
         console.error("Fehler bei Gemini API:", error);

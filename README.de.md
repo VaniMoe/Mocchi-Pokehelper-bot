@@ -6,6 +6,7 @@ Ein Discord Bot, der dir hilft, wild spawnende Pokémon vom "Pokétwo" Bot zu id
 
 ## Features
 
+- **Web Dashboard:** Startet automatisch auf `http://localhost:3000`. Zeigt eine Live-Historie der erratenen Pokémon mit Bild, Live-Logs des Bots und ein Menü zum einfachen Ändern der Konfiguration!
 - `/helpme`: Findet den letzten Pokétwo-Spawn im aktuellen Kanal und nutzt Gemini AI (Bilderkennung), um das gesuchte Pokémon zu benennen.
 - `/testtts`: Sendet eine Test-Benachrichtigung an den konfigurierten Voice-Channel.
 - **Automatische Erkennung**: Sobald Pokétwo ein neues wildes Pokémon postet, geht der Bot in einen bestimmten Sprachkanal, liest eine Benachrichtigung laut vor und geht wieder.

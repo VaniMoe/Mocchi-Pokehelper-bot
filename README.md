@@ -6,6 +6,7 @@ A Discord bot that helps you identify wild Pokémon spawns from the "Pokétwo" b
 
 ## Features
 
+- **Web Dashboard:** Starts automatically at `http://localhost:3000`. Shows a live history of identified Pokémon with images, live bot logs, and a settings menu to easily update your configuration!
 - `/helpme`: Finds the last Pokétwo spawn in the current channel and uses Gemini AI (image recognition) to name the requested Pokémon.
 - `/testtts`: Sends a test notification to the configured voice channel.
 - **Automatic Detection**: As soon as Pokétwo posts a new wild Pokémon, the bot joins a specific voice channel, reads a notification aloud, and leaves.
